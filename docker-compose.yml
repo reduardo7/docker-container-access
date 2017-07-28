@@ -1,0 +1,32 @@
+version: '2.1'
+
+services:
+
+  site:
+    image: ubuntu
+    container_name: test-site
+    volumes:
+      - "./test.txt:/test.txt"
+    command: tail -f /test.txt
+
+  dkr:
+    image: docker
+    privileged: true
+    working_dir: "/dkr"
+    volumes:
+      - ".:/dkr"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    command: docker exec test-site bash -c 'echo New line in SITE from docker >> /test.txt'
+
+  dkrc:
+    image: docker/compose:1.15.0
+    privileged: true
+    working_dir: "/dkr"
+    environment:
+      PROJECT_DIR: $PWD
+    volumes:
+      - ".:/dkr"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./entrypoint.sh:/entrypoint.sh"
+    entrypoint: /entrypoint.sh
+    command: exec site bash -c 'echo New line in SITE from docker-compose >> /test.txt'
